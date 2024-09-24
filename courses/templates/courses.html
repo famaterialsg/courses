@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row" style="height: 100vh;">
+        <!-- Sidebar -->
+        <nav class="col-md-3 d-none d-md-block sidebar" style="background-color: #000; height: 100vh; overflow-y: auto;">
+            <div class="sidebar-sticky">
+                <div class="d-flex justify-content-center align-items-center">
+                    <i class="fa-regular fa-circle mr-2 custom-circle" style="color: white;"></i>
+                    <h5 class="text-center mb-0" style="color: white;">{{ course_name }}</h5>
+                </div>
+
+                <!-- Dropdown for CSV file selection -->
+                <form method="GET" action="">
+                    <label for="csv_file" style="color: white;">Select a CSV file:</label>
+                    <select name="selected_file" id="csv_file" onchange="this.form.submit()">
+                        <option value="">--Select a file--</option>
+                        {% for file in csv_files %}
+                            <option value="{{ file }}" {% if selected_file == file %}selected{% endif %}>{{ file }}</option>
+                        {% empty %}
+                            <option value="">No CSV files found</option>
+                        {% endfor %}
+                    </select>
+                </form>
+            
+                {% if course_name %}
+                    <h2 style="color: white;">Course: {{ course_name }}</h2>
+                    <!-- Additional content for selected file can go here -->
+                {% endif %}
+
+                <ul class="nav flex-column">
+                    {% if split_sub_courses %}
+                        {% for sub_course in split_sub_courses %}
+                        <li class="nav-item">
+                            <h2 class="title_sub_course" style="color: white;">{{ sub_course.title }}</h2>
+                            <p class="description_sub_course" style="color: #ccc;">{{ sub_course.description }}</p>
+
+                            {% for module, sub_modules in sub_course.modules.items %}
+                            <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#module{{ forloop.parentloop.counter }}-{{ forloop.counter }}" aria-expanded="false" aria-controls="module{{ forloop.parentloop.counter }}-{{ forloop.counter }}" style="color: #fff;">
+                                {{ module }}
+                            </a>
+                            <div class="collapse" id="module{{ forloop.parentloop.counter }}-{{ forloop.counter }}">
+                                <ul class="nav flex-column ml-3">
+                                    {% for sub_module_data in sub_modules %}
+                                    <li class="nav-item">
+                                        <a class="nav-link sub-module" href="#" data-sub-module="{{ sub_module_data.sub_module }}" style="color: #ddd;">
+                                            {{ sub_module_data.sub_module }}
+                                        </a>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endfor %}
+                        </li>
+                        {% endfor %}
+                    {% else %}
+                        <p style="color: #ccc;">Please select a file to view its content.</p>
+                    {% endif %}
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Content -->
+            <main role="main" class="col-md-9 ml-sm-auto col-lg-9 px-4 d-flex flex-column" style="height: 100vh;">
+                <div class="flex-grow-1 overflow-auto"> <!-- Fixed height -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div id="content_html_list" class="border p-2"></div>
+                        </div>
+
+                        <div class="col-md-12">
+                            <div id="img_list" class="border p-2"></div>
+                        </div>
+
+                        <div class="col-md-12">
+                            <div id="video_url" class="border p-2"></div>
+                        </div>
+                    </div>
+                </div>
+            <!-- Navigation Buttons -->
+            <div class="d-flex justify-content-center mt-3">
+                <button id="previewButton" class="btn btn-secondary ">Preview</button>&nbsp;&nbsp;
+                <button id="nextButton" class="btn btn-primary">Next</button>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const subModuleLinks = document.querySelectorAll('.sub-module');
+        let currentSubModuleIndex = 0; // To track the current index
+
+        subModuleLinks.forEach((link, index) => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const subModuleName = this.getAttribute('data-sub-module');
+
+                fetchContent(subModuleName);
+
+                // Highlight the active submenu
+                subModuleLinks.forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+                currentSubModuleIndex = index; // Update the current index
+            });
+        });
+
+        function fetchContent(subModuleName) {
+            const data = {{ split_sub_courses|safe }};
+
+            document.getElementById('content_html_list').innerHTML = '';
+            document.getElementById('img_list').innerHTML = '';
+            document.getElementById('video_url').innerHTML = '';
+
+            for (const sub_course of data) {
+                for (const [module, sub_modules] of Object.entries(sub_course.modules)) {
+                    for (const sub_module_data of sub_modules) {
+                        if (sub_module_data.sub_module === subModuleName) {
+                            const contentHtmlList = sub_module_data.content_html_list
+                                .replace(/^\[|\]$/g, '')
+                                .replace(/\\n/g, ' ')
+                                .replace(/'/g, '')
+                                .split(',');
+
+                            contentHtmlList.forEach(value => {
+                                value = value.trim();
+                                if (value) {
+                                    document.getElementById('content_html_list').innerHTML += value + '<br>';
+                                }
+                            });
+
+                            const imgList = sub_module_data.img_list
+                                .replace(/^\[|\]$/g, '')
+                                .replace(/'/g, '')
+                                .split(',');
+
+                            imgList.forEach(imgUrl => {
+                                imgUrl = imgUrl.trim();
+                                if (imgUrl) {
+                                    document.getElementById('img_list').innerHTML += `<img src="${imgUrl}" alt="Image" style="max-width: 100%; height: auto; margin-top: 10px;">`;
+                                }
+                            });
+
+                            const videoUrl = sub_module_data.video_url.replace(/'/g, '');
+
+                            if (videoUrl) {
+                                document.getElementById('video_url').innerHTML += `
+                                    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
+                                        <iframe src="${videoUrl}" frameborder="0" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+                                    </div>`;
+                            }
+
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Trigger content display immediately after selection
+        const selectedFile = "{{ selected_file }}";
+        if (selectedFile) {
+            fetchContent(selectedFile);
+        }
+
+        // Navigation button functionality
+        document.getElementById('nextButton').addEventListener('click', function() {
+            currentSubModuleIndex = Math.min(currentSubModuleIndex + 1, subModuleLinks.length - 1);
+            subModuleLinks[currentSubModuleIndex].click();
+        });
+
+        document.getElementById('previewButton').addEventListener('click', function() {
+            currentSubModuleIndex = Math.max(currentSubModuleIndex - 1, 0);
+            subModuleLinks[currentSubModuleIndex].click();
+        });
+    });
+</script>
+
+<style>
+    .sub-module.active {
+        background-color: #007bff; /* Highlight color for active submenu */
+        color: white; /* Change text color for active submenu */
+    }
+</style>
+{% endblock %}
