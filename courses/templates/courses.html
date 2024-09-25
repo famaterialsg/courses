@@ -8,9 +8,7 @@
         <!-- Sidebar -->
         <nav class="col-md-3 d-none d-md-block sidebar" style="background-color: #000; height: 100vh; overflow-y: auto;">
             <div class="sidebar-sticky">
-                
                 <div class="d-flex justify-content-center align-items-center">
-                    <a class="navbar-brand" href="{% url 'main:home' %}">Home | </a>
                     <i class="fa-regular fa-circle mr-2 custom-circle" style="color: white;"></i>
                     <h5 class="text-center mb-0" style="color: white;">{{ course_name }}</h5>
                 </div>
@@ -104,6 +102,7 @@
                 currentSubModuleIndex = index; // Update the current index
             });
         });
+
         function fetchContent(subModuleName) {
             const data = {{ split_sub_courses|safe }};
 
@@ -115,10 +114,8 @@
                 for (const [module, sub_modules] of Object.entries(sub_course.modules)) {
                     for (const sub_module_data of sub_modules) {
                         if (sub_module_data.sub_module === subModuleName) {
-                            
-
-                            // Process the content_html_list from sub_module_data
-                            const contentHtmlList = sub_module_data.content_html_list
+                             // Process the content_html_list from sub_module_data
+                             const contentHtmlList = sub_module_data.content_html_list
                                 .replace(/^\[|\]$/g, '')   // Remove leading and trailing brackets
                                 .replace(/\\n/g, ' ')       // Replace escaped newlines with a space
                                 .replace(/'/g, '')          // Remove single quotes
@@ -134,7 +131,6 @@
 
                             // Insert the formatted HTML into the page
                             document.getElementById('content_html_list').innerHTML = newContent;
-
 
                             const imgList = sub_module_data.img_list
                                 .replace(/^\[|\]$/g, '')
@@ -163,8 +159,6 @@
                 }
             }
         }
-
-       
 
         // Trigger content display immediately after selection
         const selectedFile = "{{ selected_file }}";
