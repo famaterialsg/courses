@@ -15,7 +15,7 @@
 
                 <!-- Dropdown for CSV file selection -->
                 <form method="GET" action="">
-                    <label for="csv_file" style="color: white;">Select a CSV file:</label>
+                    <label for="csv_file" style="color: white;">Select a course:</label>
                     <select name="selected_file" id="csv_file" onchange="this.form.submit()">
                         <option value="">--Select a file--</option>
                         {% for file in csv_files %}
@@ -25,11 +25,6 @@
                         {% endfor %}
                     </select>
                 </form>
-            
-                {% if course_name %}
-                    <h2 style="color: white;">Course: {{ course_name }}</h2>
-                    <!-- Additional content for selected file can go here -->
-                {% endif %}
 
                 <ul class="nav flex-column">
                     {% if split_sub_courses %}
@@ -125,12 +120,7 @@
                                 .replace(/'/g, '')
                                 .split(',');
 
-                            contentHtmlList.forEach(value => {
-                                value = value.trim();
-                                if (value) {
-                                    document.getElementById('content_html_list').innerHTML += value + '<br>';
-                                }
-                            });
+                            document.getElementById('content_html_list').innerHTML = contentHtmlList;
 
                             const imgList = sub_module_data.img_list
                                 .replace(/^\[|\]$/g, '')
