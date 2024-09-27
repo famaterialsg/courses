@@ -16,7 +16,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.views.generic import RedirectView
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('courses.urls')),  # Route the root URL to the courses app
+    path('courses/', include('courses.urls')), 
+    path('user/', include('user.urls', namespace='user')), 
+    path('role/', include('role.urls', namespace='role')),
+    path('', RedirectView.as_view(url='/user/login/', permanent=False)),
 ]

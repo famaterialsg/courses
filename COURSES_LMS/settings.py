@@ -27,6 +27,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/courses/'  
+LOGIN_URL = '/login/'  
 
 # Application definition
 
@@ -38,6 +41,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'courses',  
+    'user',
+    'role',
+    'training_program'
+    
 ]
 
 MIDDLEWARE = [
@@ -69,18 +76,31 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'COURSES_LMS.wsgi.application'
+LOGIN_URL = '/user/login/' 
+LOGIN_REDIRECT_URL = '/courses/new-home/'  
 
-
+LOGOUT_REDIRECT_URL = '/user/login/'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',  
+
+        'NAME': 'courses',                    
+        'USER': 'root',                
+        'PASSWORD': 'thuongnb19112002',         
+        'HOST': 'localhost',                 
+        'PORT': '3306',                       
+
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

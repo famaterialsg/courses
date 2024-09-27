@@ -2,7 +2,9 @@ import os
 import pandas as pd
 from django.shortcuts import render
 from django.conf import settings
+# from django.contrib.auth.decorators import login_required
 
+# @login_required(login_url='/login/')
 def course_list(request):
     # Directory containing all CSV files
     csv_dir = os.path.join(settings.BASE_DIR, 'media/data_csv')
@@ -109,3 +111,9 @@ def course_list(request):
     }
 
     return render(request, 'courses.html', context)
+
+# courses/views.py
+from django.shortcuts import render
+
+def new_home(request):
+    return render(request, 'new_home.html')  

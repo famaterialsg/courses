@@ -15,7 +15,7 @@
 
                 <!-- Dropdown for CSV file selection -->
                 <form method="GET" action="">
-                    <label for="csv_file" style="color: white;">Select a CSV file:</label>
+                    <label for="csv_file" style="color: white;">Select a course:</label>
                     <select name="selected_file" id="csv_file" onchange="this.form.submit()">
                         <option value="">--Select a file--</option>
                         {% for file in csv_files %}
@@ -25,11 +25,6 @@
                         {% endfor %}
                     </select>
                 </form>
-            
-                {% if course_name %}
-                    <h2 style="color: white;">Course: {{ course_name }}</h2>
-                    <!-- Additional content for selected file can go here -->
-                {% endif %}
 
                 <ul class="nav flex-column">
                     {% if split_sub_courses %}
@@ -119,18 +114,23 @@
                 for (const [module, sub_modules] of Object.entries(sub_course.modules)) {
                     for (const sub_module_data of sub_modules) {
                         if (sub_module_data.sub_module === subModuleName) {
-                            const contentHtmlList = sub_module_data.content_html_list
-                                .replace(/^\[|\]$/g, '')
-                                .replace(/\\n/g, ' ')
-                                .replace(/'/g, '')
-                                .split(',');
+                             // Process the content_html_list from sub_module_data
+                             const contentHtmlList = sub_module_data.content_html_list
+                                .replace(/^\[|\]$/g, '')   // Remove leading and trailing brackets
+                                .replace(/\\n/g, ' ')       // Replace escaped newlines with a space
+                                .replace(/'/g, '')          // Remove single quotes
+                                .split(',');                // Split the content into an array
 
-                            contentHtmlList.forEach(value => {
-                                value = value.trim();
-                                if (value) {
-                                    document.getElementById('content_html_list').innerHTML += value + '<br>';
-                                }
+                            // Prepare a variable to hold the new content
+                            let newContent = ''; // Use let instead of const to allow reassignment
+
+                            // Iterate over each piece of HTML content and format it
+                            contentHtmlList.forEach(htmlContent => {
+                                newContent += htmlContent.trim(); // Trim to remove any leading/trailing whitespace
                             });
+
+                            // Insert the formatted HTML into the page
+                            document.getElementById('content_html_list').innerHTML = newContent;
 
                             const imgList = sub_module_data.img_list
                                 .replace(/^\[|\]$/g, '')
