@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .scrollable-content {
+    max-height: 600px; /* Set a maximum height for the content */
+    overflow-y: auto; /* Enable vertical scrolling */
+    padding: 10px; /* Add some padding */
+    border: 1px solid #ccc; /* Optional: Add a border */
+    border-radius: 5px; /* Optional: Round the corners */
+    background-color: #f9f9f9; /* Optional: Light background color */
+}
+
+</style>
+<div class="container">
+    <h1>Details of the course [{{ course.course }}]</h1>
+    
+    <!-- Back to Course List Button -->
+    <a href="{% url 'courses:course_admin' %}" class="btn btn-primary mb-4">
+        <i class="fas fa-arrow-left"></i> Back to Course List
+    </a>
+    {% if message %}
+    <div class="alert alert-warning" role="alert">
+        {{ message }}
+    </div>
+    {% else %}
+       
+        <div class="scrollable-content">
+        {% for sub_module in sub_modules %}
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">{{ sub_module.sub_module }}</h5>
+                    
+                    <p class="card-text">{{ sub_module.content|safe }}</p>  <!-- Use content instead of content_html_list -->
+
+                    
+                    {% if sub_module.video_url %}
+                        <h6 class="card-title">Course Video</h6>
+                        <a href="{{ sub_module.video_url }}" class="btn btn-secondary" target="_blank">
+                            <i class="fas fa-video"></i> Watch Video
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+        </div>
+    {% endif %}
+
+
+</div>
+{% endblock %}

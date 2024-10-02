@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <h2 class="my-4">Course List</h2>
+
+    <!-- CSV Upload Form -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-upload"></i> Import Courses from CSV
+        </div>
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-file-import"></i> Import CSV
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Courses Display -->
+<div class="accordion" id="courseAccordion">
+    {% regroup courses by course as course_list %}
+    
+    <!-- Loop over each course -->
+    {% for course_group in course_list %}
+        <div class="card">
+            <div class="card-header" id="heading-course-{{ forloop.counter }}">
+                <h2 class="mb-0">
+                    <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse-course-{{ forloop.counter }}" aria-expanded="true" aria-controls="collapse-course-{{ forloop.counter }}">
+                        {{ course_group.grouper }}
+                    </button>
+                </h2>
+            </div>
+            <div id="collapse-course-{{ forloop.counter }}" class="collapse" aria-labelledby="heading-course-{{ forloop.counter }}" data-parent="#courseAccordion">
+                <div class="card-body">
+                    
+                    <!-- Sub Courses -->
+                    {% regroup course_group.list by sub_course as sub_course_list %}
+                    <div class="accordion" id="subCourseAccordion-{{ forloop.counter }}">
+                        {% for sub_course_group in sub_course_list %}
+                            <div class="card">
+                                <div class="card-header" id="heading-sub-course-{{ forloop.counter }}-{{ forloop.parentloop.counter }}">
+                                    <h3 class="mb-0">
+                                        <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse-sub-course-{{ forloop.counter }}-{{ forloop.parentloop.counter }}" aria-expanded="true" aria-controls="collapse-sub-course-{{ forloop.counter }}-{{ forloop.parentloop.counter }}">
+                                            {{ sub_course_group.grouper }}
+                                        </button>
+                                    </h3>
+                                </div>
+                                <div id="collapse-sub-course-{{ forloop.counter }}-{{ forloop.parentloop.counter }}" class="collapse" aria-labelledby="heading-sub-course-{{ forloop.counter }}-{{ forloop.parentloop.counter }}" data-parent="#subCourseAccordion-{{ forloop.parentloop.counter }}">
+                                    <div class="card-body">
+                                        <ul>
+                                            <!-- Modules -->
+                                            {% regroup sub_course_group.list by module as module_list %}
+                                            {% for module_group in module_list %}
+                                                <li><strong>{{ module_group.grouper }}</strong>
+                                                    <ul>
+                                                        <!-- Sub Modules -->
+                                                        {% for item in module_group.list %}
+                                                            <li>{{ item.sub_module }}</li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+</div>
+
+{% endblock %}

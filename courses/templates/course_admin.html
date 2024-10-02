@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container mt-4">
+    <h1 class="mb-4 text-center">Course Administration</h1>
+
+    {% if message %}
+    <div class="alert alert-warning" role="alert">
+        {{ message }}
+    </div>
+    {% endif %}
+
+    <!-- Buttons for Import and Back to Homepage -->
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-3 mb-3">
+            <!-- Import Button to Upload CSV -->
+            <a href="#" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#importModal">
+                <i class="fas fa-file-import"></i> Import Courses via CSV
+            </a>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div class="modal fade" id="importModal" tabindex="-1" role="dialog" aria-labelledby="importModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="importModalLabel">Upload CSV File</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form action="{% url 'courses:import_courses' %}" method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="csvFile">Choose CSV file:</label>
+                            <input type="file" class="form-control-file" id="csvFile" name="csv_file" accept=".csv" required>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-success mr-2">Upload</button>
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Courses Display -->
+    <div class="accordion" id="courseAccordion">
+        {% regroup courses by course as course_list %}
+        
+        <!-- Loop over each course -->
+        {% for course_group in course_list %}
+        <div class="card">
+            <div class="card-header" id="heading-course-{{ forloop.counter }}">
+                <h2 class="mb-0 d-flex justify-content-between">
+                    <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse-course-{{ forloop.counter }}" aria-expanded="true" aria-controls="collapse-course-{{ forloop.counter }}">
+                        {{ forloop.counter }}. {{ course_group.grouper }}
+                    </button>
+                    
+                    <!-- Action buttons for each course -->
+                    <div class="d-flex">
+                        <!-- View Details Button -->
+                        <a href="{% url 'courses:course_detail' course_group.grouper %}" class="btn btn-sm btn-info mr-2">
+                            <i class="fas fa-info-circle"></i> View Details
+                        </a>
+
+                        <!-- Delete button as a form -->
+                        <form action="{% url 'courses:delete_courses' %}" method="POST" style="display:inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="course_name" value="{{ course_group.grouper }}">
+                            <!-- Delete Button with Icon -->
+                            <button type="submit" class="btn btn-sm btn-danger">
+                                <i class="fas fa-trash-alt"></i> Delete
+                            </button>
+                        </form>
+                    </div>
+                </h2>
+
+                <div id="collapse-course-{{ forloop.counter }}" class="collapse" aria-labelledby="heading-course-{{ forloop.counter }}" data-parent="#courseAccordion">
+                    <div class="card-body">
+                        <!-- Sub Courses -->
+                        {% regroup course_group.list by sub_course as sub_course_list %}
+                        <div class="accordion" id="subCourseAccordion-{{ forloop.counter }}">
+                            {% for sub_course_group in sub_course_list %}
+                                <div class="card">
+                                    <div class="card-header" id="heading-sub-course-{{ forloop.counter }}-{{ forloop.parentloop.counter }}">
+                                        <h3 class="mb-0 d-flex justify-content-between">
+                                            <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse-sub-course-{{ forloop.counter }}-{{ forloop.parentloop.counter }}" aria-expanded="true" aria-controls="collapse-sub-course-{{ forloop.counter }}-{{ forloop.parentloop.counter }}">
+                                                {{ sub_course_group.grouper }}
+                                            </button>
+                                        </h3>
+                                    </div>
+                                    <div id="collapse-sub-course-{{ forloop.counter }}-{{ forloop.parentloop.counter }}" class="collapse" aria-labelledby="heading-sub-course-{{ forloop.counter }}-{{ forloop.parentloop.counter }}" data-parent="#subCourseAccordion-{{ forloop.parentloop.counter }}">
+                                        <div class="card-body">
+                                            <ul>
+                                                <!-- Modules -->
+                                                {% regroup sub_course_group.list by module as module_list %}
+                                                {% for module_group in module_list %}
+                                                    <li>
+                                                        <strong>{{ module_group.grouper }}</strong>
+                                                        <div class="d-flex justify-content-between">
+                                                            <ul>
+                                                                <!-- Sub Modules -->
+                                                                {% for item in module_group.list %}
+                                                                    <li>{{ item.sub_module }}</li>
+                                                                {% endfor %}
+                                                            </ul>
+                                                        </div>
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    function showImportForm() {
+        document.getElementById('importFormContainer').style.display = 'block';
+    }
+    function hideImportForm() {
+        document.getElementById('importFormContainer').style.display = 'none';
+    }
+</script>
+{% endblock %}

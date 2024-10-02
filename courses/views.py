@@ -1,8 +1,180 @@
 import os
+import re
 import pandas as pd
-from django.shortcuts import render
+from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
+from .models import Course
+from .forms import ExcelImportCourseForm
+from django.contrib import messages
+from django.http import JsonResponse
+
 # from django.contrib.auth.decorators import login_required
+
+
+def home(request):
+    return render(request, 'home.html')  
+
+# For admin
+def clean_content(content):
+    if isinstance(content, str):
+        return re.sub(r'[^\x00-\x7F]+', '', content)  # Loại bỏ ký tự không phải ASCII
+    return content
+
+def course_admin(request):
+    courses = Course.objects.all().order_by('course', 'sub_course', 'module', 'sub_module')
+    if not courses:
+        message = "No course available."  # Set message if no course is found
+        return render(request, 'course_admin.html', {'message': message})
+    return render(request, 'course_admin.html', {'courses': courses})
+
+
+def course_list_admin(request):
+    form = ExcelImportCourseForm()
+    
+    # Lấy tất cả các sub_courses từ database
+    sub_courses = Course.objects.values('sub_course', 'module', 'sub_module', 'content', 'img_list', 'video_url')
+    
+    # Tổ chức dữ liệu theo sub_course và module
+    sub_courses_data = {}
+    for row in sub_courses:
+        sub_course = row['sub_course']
+        module = row['module']
+        sub_module_data = {
+            'sub_module': row['sub_module'],
+            'content': row['content'],  # Updated field
+            'img_list': row['img_list'],
+            'video_url': row['video_url']
+        }
+    
+        if sub_course not in sub_courses_data:
+            sub_courses_data[sub_course] = {}
+        
+        if module not in sub_courses_data[sub_course]:
+            sub_courses_data[sub_course][module] = []
+        
+        sub_courses_data[sub_course][module].append(sub_module_data)
+
+    context = {
+        'sub_courses': [{'sub_course': sub_course, 'modules': modules} for sub_course, modules in sub_courses_data.items()],
+        'form': form
+    }
+
+    return render(request, 'course_list.html', context)
+
+
+def course_detail(request, course_name):
+    # Replace - with / to get the original course name
+    course_name_decoded = course_name.replace('-', '/')
+    course = Course.objects.filter(course=course_name_decoded).first()  # Get the specific course
+
+    if not course:
+        return render(request, '404.html', {'message': 'No course available.'})  # Show a message if no course is found
+
+    sub_modules = Course.objects.filter(course=course_name_decoded).distinct('sub_module')  # Fetch unique sub-modules
+
+    return render(request, 'course_detail.html', {
+        'course': course,
+        'sub_modules': sub_modules,
+    })
+
+
+
+def get_sub_module_data(request, sub_module_name):
+    course = Course.objects.filter(sub_module=sub_module_name).first()
+
+    if not course:
+        return JsonResponse({"error": "Sub-module not found"}, status=404)
+
+    return JsonResponse({
+        "content": course.content,
+        "img_list": course.img_list,
+        "video_url": course.video_url,
+    })
+
+
+
+def import_courses(request):
+    if request.method == 'POST':
+        form = ExcelImportCourseForm(request.POST, request.FILES)
+        if form.is_valid():
+            uploaded_file = request.FILES['csv_file']
+            try:
+                df = pd.read_csv(uploaded_file)  
+                print(df)
+                print(df.columns) 
+
+                courses_imported = 0 
+
+                df['content_html_list'] = df['content_html_list'].apply(clean_content)
+
+                for index, row in df.iterrows():
+                    if row.isnull().all():
+                        continue 
+                    course_name = row.get("course")
+                    sub_course_name = row.get("sub_course")
+                    module_name = row.get("module")
+                    sub_module_name = row.get("sub_module")
+                    content_html_list = row.get("content_html_list")  # No error expected here
+                    img_list = row.get("img_list")
+                    video_url = row.get("video_url")
+
+                    print(f"Importing row: {row}")  # Log the row being processed
+
+                    try:
+                        Course.objects.create(
+                            course=course_name,
+                            sub_course=sub_course_name,
+                            module=module_name,
+                            sub_module=sub_module_name,
+                            content=content_html_list,  # Update this to match your model
+                            img_list=img_list,
+                            video_url=video_url
+                        )
+                        courses_imported += 1
+                        print(f"Imported row {index} successfully.")  # Log successful import
+                    except Exception as e:
+                        print(f"Error importing row {index}: {e}")  # Log import errors
+
+                messages.success(request, f"{courses_imported} courses imported successfully!")
+            except Exception as e:
+                messages.error(request, f"An error occurred during import: {e}")
+
+            return redirect('courses:course_admin')  # Redirect to your course list page
+    else:
+        form = ExcelImportCourseForm()
+
+    return render(request, 'course_list.html', {'form': form})
+
+
+def delete_courses(request):
+    if request.method == 'POST':
+        course_name = request.POST.get('course_name')
+        
+        if course_name:
+            deleted_count, _ = Course.objects.filter(course=course_name).delete()
+            if deleted_count > 0:
+                messages.success(request, f"{deleted_count} course(s) deleted successfully!")
+            else:
+                messages.warning(request, "No courses found with that name.")
+        else:
+            messages.error(request, "Please provide a course name.")
+        
+    return redirect('courses:course_admin')  # Replace with your course list view
+
+def delete_courses2(request):
+    if request.method == 'POST':
+        course_name = request.POST.get('course_name')
+        
+        if course_name:
+            deleted_count, _ = Course.objects.filter(course=course_name).delete()
+            if deleted_count > 0:
+                messages.success(request, f"{deleted_count} courses deleted successfully!")
+            else:
+                messages.warning(request, "No courses found with that name.")
+        else:
+            messages.error(request, "Please provide a course name.")
+
+    return render(request, 'course_admin.html') 
 
 # @login_required(login_url='/login/')
 def course_list(request):
@@ -112,8 +284,63 @@ def course_list(request):
 
     return render(request, 'courses.html', context)
 
-# courses/views.py
-from django.shortcuts import render
 
-def new_home(request):
-    return render(request, 'new_home.html')  
+
+# GET DATA FROM DATABASE (TEST)
+
+def get_courses(request):
+    # Get all unique course names
+    courses = Course.objects.values_list('course_name', flat=True).distinct()
+    return render(request, 'courses_list_database.html', {'courses': courses})
+
+
+def courses_list_database(request):
+    # Get all unique courses from the 'course' field
+    courses = Course.objects.values_list('course', flat=True).distinct()
+
+    # Default to None if no course is selected
+    selected_course = None
+    sub_courses_data = {}
+
+    # Check if the form is submitted
+    if request.method == 'POST':
+        selected_course = request.POST.get('selected_course')
+
+        # Filter sub_courses by the selected course and sort by sub_course and module
+        sub_courses = Course.objects.filter(course=selected_course).order_by('sub_course', 'module').values(
+            'sub_course', 'module', 'sub_module', 'content', 'img_list', 'video_url'
+        )
+
+        # Organize data by sub_course and module
+        for row in sub_courses:
+            sub_course = row['sub_course']
+            module = row['module']
+            sub_module_data = {
+                'sub_module': row['sub_module'],
+                'content': row['content'],
+                'img_list': row['img_list'],
+                'video_url': row['video_url']
+            }
+
+            if sub_course not in sub_courses_data:
+                sub_courses_data[sub_course] = {}
+
+            if module not in sub_courses_data[sub_course]:
+                sub_courses_data[sub_course][module] = []
+
+            sub_courses_data[sub_course][module].append(sub_module_data)
+
+    context = {
+        'courses': courses,
+        'selected_course': selected_course,  # Pass the selected course to the template
+        'sub_courses': [{'sub_course': sub_course, 'modules': modules} for sub_course, modules in sub_courses_data.items()]
+    }
+
+    return render(request, 'courses_list_database.html', context)
+
+
+
+
+
+
+    

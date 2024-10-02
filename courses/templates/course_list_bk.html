@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+
+{% block title %}Course List{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Course List</h1>
+    
+    <button class="btn btn-success" title="Import Courses from Excel" data-toggle="modal" data-target="#importModal" data-toggle="tooltip">
+        <i class="fas fa-file-import"></i> Import
+    </button>
+
+    <!-- Nút Xóa Khóa Học -->
+    <button class="btn btn-danger" title="Delete Courses" data-toggle="modal" data-target="#deleteModal" data-toggle="tooltip">
+        <i class="fas fa-trash-alt"></i> Delete
+    </button>
+    <h2 class="mt-4">All Courses</h2>
+    <div class="row" style="height: 100vh;">
+        <!-- Sidebar -->
+        <nav class="col-md-3 d-none d-md-block sidebar" style="background-color: #000; height: 100vh; overflow-y: auto;">
+            <div class="sidebar-sticky">
+                <div class="d-flex justify-content-center align-items-center">
+                    <h5 class="text-center mb-0" style="color: white;">Courses</h5>
+                </div>
+
+                <!-- List Sub-Courses and Modules from DB -->
+                <ul class="nav flex-column">
+                    {% for sub_course in sub_courses %}
+                    <li class="nav-item">
+                        <h2 class="title_sub_course" style="color: white;">{{ sub_course.sub_course }}</h2>
+
+                        {% for module, sub_modules in sub_course.modules.items %}
+                        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#module{{ forloop.parentloop.counter }}-{{ forloop.counter }}" aria-expanded="false" aria-controls="module{{ forloop.parentloop.counter }}-{{ forloop.counter }}" style="color: #fff;">
+                            {{ module }}
+                        </a>
+                        <div class="collapse" id="module{{ forloop.parentloop.counter }}-{{ forloop.counter }}">
+                            <ul class="nav flex-column ml-3">
+                                {% for sub_module_data in sub_modules %}
+                                <li class="nav-item">
+                                    <a class="nav-link sub-module" href="#" data-sub-module="{{ sub_module_data.sub_module }}" style="color: #ddd;">
+                                        {{ sub_module_data.sub_module }}
+                                    </a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endfor %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Content -->
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-9 px-4 d-flex flex-column" style="height: 100vh;">
+            <div class="flex-grow-1 overflow-auto">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div id="content_html_list" class="border p-2"></div>
+                    </div>
+
+                    <div class="col-md-12">
+                        <div id="img_list" class="border p-2"></div>
+                    </div>
+
+                    <div class="col-md-12">
+                        <div id="video_url" class="border p-2"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="d-flex justify-content-center mt-3">
+                <button id="previewButton" class="btn btn-secondary">Preview</button>
+                <button id="nextButton" class="btn btn-primary">Next</button>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Import Modal -->
+<div class="modal fade" id="importModal" tabindex="-1" role="dialog" aria-labelledby="importModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importModalLabel">Import Course from Excel</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                 {% if form %}
+                    <form method="post" enctype="multipart/form-data" action="{% url 'courses:import_courses' %}">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">Upload</button>
+                        </div>
+                    </form>
+                {% else %}
+                    <p>No form available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Delete Courses</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form method="post" action="{% url 'courses:delete_courses' %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="course_name">Course Name:</label>
+                        <input type="text" class="form-control" id="course_name" name="course_name" required>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const subModuleLinks = document.querySelectorAll('.sub-module');
+    let currentSubModuleIndex = 0;
+
+    subModuleLinks.forEach((link, index) => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const subModuleName = this.getAttribute('data-sub-module');
+            fetchContent(subModuleName);
+            subModuleLinks.forEach(l => l.classList.remove('active'));
+            this.classList.add('active');
+            currentSubModuleIndex = index;
+        });
+    });
+
+    function fetchContent(subModuleName) {
+        const url = `/courses/get_sub_module_data/${encodeURIComponent(subModuleName)}/`;
+        console.log("Fetching content from:", url);
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                displayContent(data);
+            })
+            .catch(error => {
+                console.error('Error fetching sub module data:', error);
+            });
+    }
+
+    // Hàm hiển thị dữ liệu
+    function displayContent(data) {
+        // Làm sạch và hiển thị content_html_list
+        const cleanContentHtmlList = cleanData(data.content_html_list);
+        document.getElementById('content_html_list').innerHTML = cleanContentHtmlList;
+
+        // Xử lý danh sách ảnh
+        const imgList = parseImageList(data.img_list); // Chuyển đổi chuỗi img_list thành mảng
+        document.getElementById('img_list').innerHTML = ''; // Làm sạch danh sách ảnh trước khi thêm mới
+        if (imgList.length > 0) { // Kiểm tra xem có ảnh hay không
+            imgList.forEach(imgUrl => {
+                imgUrl = imgUrl.trim();
+                if (imgUrl) { 
+                    document.getElementById('img_list').innerHTML += `<img src="${imgUrl}" alt="Image" style="max-width: 100%; height: auto; margin-top: 10px;">`; // Hiển thị ảnh
+                }
+            });
+        } else {
+            // Nếu img_list rỗng, có thể làm sạch phần hiển thị hoặc giữ nguyên
+            document.getElementById('img_list').innerHTML = ''; // Đảm bảo không có nội dung nào
+        }
+
+        // Xử lý video URL
+        const videoUrl = data.video_url.replace(/'/g, ''); // Làm sạch video URL
+        if (videoUrl) {
+            document.getElementById('video_url').innerHTML = `
+                <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
+                    <iframe src="${videoUrl}" frameborder="0" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+                </div>`;
+        } else {
+            document.getElementById('video_url').innerHTML = ''; // Nếu không có video, làm sạch phần này
+        }
+    }
+
+    // Hàm làm sạch dữ liệu: bỏ [''] và \n
+    function cleanData(data) {
+        if (typeof data === 'string') {
+            return data
+                .replace(/\['|'\]/g, '')  // Bỏ các ký tự [' và ']
+                .replace(/\\n/g, '<br>');  // Thay \n bằng <br> để hiển thị xuống dòng
+        }
+        return data;
+    }
+
+    // Hàm chuyển đổi chuỗi img_list thành mảng
+    function parseImageList(imgListString) {
+    // Bỏ các ký tự không cần thiết và chuyển đổi thành mảng
+    imgListString = imgListString.replace(/^\[|\]$/g, '').replace(/'/g, '"');
+    try {
+        // Xử lý các ký tự không hợp lệ có thể có
+        return JSON.parse(imgListString); // Chuyển đổi thành mảng
+    } catch (e) {
+        console.error('Error parsing image list:', e);
+        console.log("Original img_list string:", imgListString); // In ra chuỗi ban đầu để kiểm tra
+        return []; // Trả về mảng rỗng nếu có lỗi
+    }
+}
+
+    // Điều khiển nút Next và Previous
+    document.getElementById('nextButton').addEventListener('click', function() {
+        currentSubModuleIndex = Math.min(currentSubModuleIndex + 1, subModuleLinks.length - 1);
+        subModuleLinks[currentSubModuleIndex].click();
+    });
+
+    document.getElementById('previewButton').addEventListener('click', function() {
+        currentSubModuleIndex = Math.max(currentSubModuleIndex - 1, 0);
+        subModuleLinks[currentSubModuleIndex].click();
+    });
+});
+
+
+</script>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function(){
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+</script>
+{% endblock %}
