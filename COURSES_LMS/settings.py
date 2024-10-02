@@ -11,9 +11,19 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import os
+
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Media files settings
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# CKEditor upload path (relative to MEDIA_ROOT)
+CKEDITOR_UPLOAD_PATH = 'uploads/ckeditor/'
 
 
 # Quick-start development settings - unsuitable for production
@@ -43,7 +53,9 @@ INSTALLED_APPS = [
     'courses',  
     'user',
     'role',
-    'training_program'
+    'training_program',
+    'ckeditor',
+    'ckeditor_uploader',
     
 ]
 
@@ -77,7 +89,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'COURSES_LMS.wsgi.application'
 LOGIN_URL = '/user/login/' 
-LOGIN_REDIRECT_URL = '/courses/new-home/'  
+LOGIN_REDIRECT_URL = '/courses/home/'  
 
 LOGOUT_REDIRECT_URL = '/user/login/'
 # Database
@@ -89,18 +101,30 @@ LOGOUT_REDIRECT_URL = '/user/login/'
 #         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
 # }
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',  
+
+#         'NAME': 'courses',                    
+#         'USER': 'root',                
+#         'PASSWORD': 'thuongnb19112002',         
+#         'HOST': 'localhost',                 
+#         'PORT': '3306',                       
+
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',  
-
-        'NAME': 'courses',                    
-        'USER': 'root',                
-        'PASSWORD': 'thuongnb19112002',         
-        'HOST': 'localhost',                 
-        'PORT': '3306',                       
-
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'coursesdb',
+        'USER': 'postgres',
+        'PASSWORD': '1234567890',
+        'HOST': 'localhost',  # hoặc địa chỉ IP của server PostgreSQL
+        'PORT': '5432',  # cổng mặc định của PostgreSQL
     }
 }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
