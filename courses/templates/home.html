@@ -6,45 +6,10 @@
 <div class="container mt-5">
     <h1 class="text-center mb-4">Welcome to Materials</h1>
 
-    <div class="row">
-        <!-- Users Card -->
-        <div class="col-md-6">
-            <div class="card text-center mb-4" style="height: 250px;">
-                <div class="card-body">
-                    <h5 class="card-title"><i class="fas fa-users fa-2x"></i></h5>
-                    <h4 class="card-title mt-3">Users</h4>
-                    <p class="card-text">Manage and view the list of all registered users in the system.</p>
-                    <a href="{% url 'user:user_list' %}" class="btn btn-secondary mt-2">Go to Users</a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Roles Card -->
-        <div class="col-md-6">
-            <div class="card text-center mb-4" style="height: 250px;">
-                <div class="card-body">
-                    <h5 class="card-title"><i class="fas fa-user-tag fa-2x"></i></h5>
-                    <h4 class="card-title mt-3">Roles</h4>
-                    <p class="card-text">Assign roles and manage permissions for users in the system.</p>
-                    <a href="{% url 'role:role_list' %}" class="btn btn-info mt-2">Manage Roles</a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Import Courses Card -->
-        <div class="col-md-6">
-            <div class="card text-center mb-4" style="height: 250px;">
-                <div class="card-body">
-                    <h5 class="card-title"><i class="fas fa-file-import fa-2x"></i></h5>
-                    <h4 class="card-title mt-3">Import Courses</h4>
-                    <p class="card-text">Upload and import new courses from CSV files to the database.</p>
-                    <a href="{% url 'courses:course_admin' %}" class="btn btn-primary mt-2">Import Courses</a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Sharing Courses Card -->
-        <div class="col-md-6">
+    
+        <!-- Sharing Courses Card - Only show if user is a Student -->
+        {% if is_student %}
+        <div class="col-md-12">
             <div class="card text-center mb-4" style="height: 250px;">
                 <div class="card-body">
                     <h5 class="card-title"><i class="fas fa-share-alt fa-2x"></i></h5>
@@ -54,6 +19,54 @@
                 </div>
             </div>
         </div>
+        {%else%}
+        <div class="row">
+            <!-- Users Card -->
+            <div class="col-md-6">
+                <div class="card text-center mb-4" style="height: 250px;">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-users fa-2x"></i></h5>
+                        <h4 class="card-title mt-3">Users</h4>
+                        <p class="card-text">Manage and view the list of all registered users in the system.</p>
+                        <a href="{% url 'user:user_list' %}" class="btn btn-secondary mt-2">Go to Users</a>
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Roles Card -->
+            <div class="col-md-6">
+                <div class="card text-center mb-4" style="height: 250px;">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-user-tag fa-2x"></i></h5>
+                        <h4 class="card-title mt-3">Roles</h4>
+                        <p class="card-text">Assign roles and manage permissions for users in the system.</p>
+                        <a href="{% url 'role:role_list' %}" class="btn btn-info mt-2">Manage Roles</a>
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Import Courses Card -->
+            <div class="col-md-6">
+                <div class="card text-center mb-4" style="height: 250px;">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-file-import fa-2x"></i></h5>
+                        <h4 class="card-title mt-3">Import Courses</h4>
+                        <p class="card-text">Upload and import new courses from CSV files to the database.</p>
+                        <a href="{% url 'courses:course_admin' %}" class="btn btn-primary mt-2">Import Courses</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card text-center mb-4" style="height: 250px;">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-share-alt fa-2x"></i></h5>
+                        <h4 class="card-title mt-3">Sharing Courses</h4>
+                        <p class="card-text">Access and share courses from the available database resources.</p>
+                        <a href="{% url 'courses:courses_list_database' %}" class="btn btn-primary mt-2">Share Courses</a>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
     </div>
 
     <!-- Additional Info or Features Section -->

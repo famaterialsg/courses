@@ -3,6 +3,11 @@
 {% block title %}Role List{% endblock %}
 
 {% block content %}
+
+{% if user.is_authenticated %}
+
+    <!-- Display protected content -->
+
 <div class="container mt-4">
     <h2>Roles</h2>
 
@@ -77,4 +82,10 @@
     $('[data-toggle="tooltip"]').tooltip();
   });
 </script>
+
+{% else %}
+<div class="alert alert-warning text-center mt-4" role="alert">
+  <strong>Please</strong> <a href="{% url 'user:login' %}" class="alert-link">login</a> to see this content.
+</div>
+{% endif %}
 {% endblock %}

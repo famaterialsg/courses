@@ -3,35 +3,49 @@
 {% block title %}Courses{% endblock %}
 
 {% block content %}
+
+{% if user.is_authenticated %}
+<style>
+    .sub-module.active {
+        background-color: #007bff; /* Highlight color */
+        color: white; /* Text color for active state */
+    }
+</style>
+<!-- Display protected content -->
 <div class="container-fluid">
     <div class="row" style="height: 80vh;">
         <!-- Sidebar -->
         <nav class="col-md-3 d-none d-md-block sidebar" style="background-color: #000; height: 100vh; overflow-y: auto;">
             <div class="sidebar-sticky">
-                <div class="d-flex justify-content-center align-items-center">
-                    <h5 class="text-center mb-0" style="color: white;">Courses</h5>
-                </div>
+                
+                    <!-- Back to Home Button -->
+                <a href="{% url 'courses:home' %}" class="btn btn-secondary mb-3">
+                    <i class="fas fa-home"></i> Back to Home
+                </a>
+                
+                
 
                 <!-- Course Selection Dropdown -->
-                <div class="col-md-12 mb-3">
-                    <form id="courseForm" method="POST" action="{% url 'courses:courses_list_database' %}">
-                        {% csrf_token %}
+            <div class="col-md-12">
                 
-                        <div class="form-group">
-                            <label for="courseComboBox" class="form-label">Select a Course:</label>
-                            <select name="selected_course" id="courseComboBox" class="form-control">
-                                <option disabled>Select a course</option>
-                                {% for course in courses %}
-                                    <option value="{{ course }}" {% if selected_course == course %}selected{% endif %}>
-                                        {{ course }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
                 
-                        <button type="submit" class="btn btn-primary mt-2">Submit</button>
-                    </form>
-                </div>                
+                <form id="courseForm" method="POST" action="{% url 'courses:courses_list_database' %}">
+                    {% csrf_token %}
+
+                    <div class="form-group">
+                        <select name="selected_course" id="courseComboBox" class="form-control" onchange="this.form.submit()">
+                            <option value="">-- Select a course-- </option>
+                            {% for course in courses %}
+                                <option value="{{ course }}" {% if selected_course == course %}selected{% endif %}>
+                                    {{ course }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </form>
+                
+            </div>
+           
                 
                 <!-- List Sub-Courses and Modules from DB -->
                 <ul class="nav flex-column">
@@ -200,4 +214,10 @@
         $('[data-toggle="tooltip"]').tooltip();
     });
 </script>
+
+{% else %}
+<div class="alert alert-warning text-center mt-4" role="alert">
+  <strong>Please</strong> <a href="{% url 'user:login' %}" class="alert-link">login</a> to see this content.
+</div>
+{% endif %}
 {% endblock %}

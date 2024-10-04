@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path,re_path
 from . import views
 app_name = 'courses'
 urlpatterns = [
@@ -17,7 +17,8 @@ urlpatterns = [
 
     path('import-course/<str:course_name>/', views.import_courses, name='import_courses'),
     path('delete-course/<str:course_name>/', views.delete_courses, name='delete_course'),
-
+    path('edit/<str:course_name>/', views.edit_course, name='edit_course'),
+    re_path(r'^edit-module/(?P<sub_module_name>.+)/$', views.edit_module, name='edit_module'),
     
    
 ]

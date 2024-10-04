@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4 text-center">Edit Course: {{ course_name }}</h1>
+
+    <div class="accordion" id="courseAccordion">
+        <!-- Nhóm các khóa học theo sub_course -->
+        {% regroup courses by sub_course as sub_course_list %}
+        
+        <!-- Lặp qua từng nhóm sub_course -->
+        {% for sub_course_group in sub_course_list %}
+        <div class="card">
+            <div class="card-header" id="heading-{{ forloop.counter }}">
+                <h2 class="mb-0 d-flex justify-content-between">
+                    <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse-{{ forloop.counter }}" aria-expanded="true" aria-controls="collapse-{{ forloop.counter }}">
+                        {{ forloop.counter }}. {{ sub_course_group.grouper }}
+                    </button>
+                </h2>
+            </div>
+
+            <!-- Nội dung collapse cho mỗi nhóm sub_course -->
+            <div id="collapse-{{ forloop.counter }}" class="collapse" aria-labelledby="heading-{{ forloop.counter }}" data-parent="#courseAccordion">
+                <div class="card-body">
+                    <!-- Nhóm các module theo tên module -->
+                    {% regroup sub_course_group.list by module as module_list %}
+                    
+                    <!-- Lặp qua từng nhóm module -->
+                    <div class="accordion" id="moduleAccordion-{{ forloop.counter }}">
+                        {% for module_group in module_list %}
+                        <div class="card">
+                            <div class="card-header" id="heading-module-{{ forloop.counter }}-{{ forloop.parentloop.counter }}">
+                                <h3 class="mb-0 d-flex justify-content-between">
+                                    <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse-module-{{ forloop.counter }}-{{ forloop.parentloop.counter }}" aria-expanded="true" aria-controls="collapse-module-{{ forloop.counter }}-{{ forloop.parentloop.counter }}">
+                                        Module: {{ module_group.grouper }}
+                                    </button>
+                                </h3>
+                            </div>
+
+                            <!-- Collapse cho mỗi module -->
+                            <div id="collapse-module-{{ forloop.counter }}-{{ forloop.parentloop.counter }}" class="collapse" aria-labelledby="heading-module-{{ forloop.counter }}-{{ forloop.parentloop.counter }}" data-parent="#moduleAccordion-{{ forloop.parentloop.counter }}">
+                                <div class="card-body">
+                                    <!-- Nhóm các sub_module theo sub_module -->
+                                    {% regroup module_group.list by sub_module as sub_module_list %}
+                                    
+                                    <!-- Lặp qua từng nhóm sub_module -->
+                                    <ul class="list-unstyled">
+                                        {% for sub_module_group in sub_module_list %}
+                                        <li class="d-flex justify-content-between align-items-center">
+                                            <strong>{{ sub_module_group.grouper }}</strong>
+                                            <div>
+                                                <a href="#" class="btn btn-sm btn-info mr-2 mb-2">
+                                                    <i class="fas fa-info-circle"></i> View
+                                                </a>
+
+                                                <a href="{% url 'courses:edit_module' sub_module_group.grouper%}" class="btn btn-sm btn-warning mr-2 mb-2">
+                                                    <i class="fas fa-edit"></i> Edit 
+                                                </a>
+                                                
+                                                <form action="#" method="POST" style="display:inline;">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="course_name" value="{{ course.sub_course }}">
+                                                    <button type="submit" class="btn btn-sm btn-danger mb-2">
+                                                        <i class="fas fa-trash-alt"></i> Delete
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p>No courses available for this course name.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4 text-center">Edit Course: {{ course_name }}</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.media }}
+
+        <div class="form-group">
+            {{ form.course.label_tag }}  <!-- Label for the field -->
+            {{ form.course }}  <!-- Form field with Bootstrap styling -->
+        </div>
+
+        <div class="form-group">
+            {{ form.sub_course.label_tag }}
+            {{ form.sub_course }}
+        </div>
+
+        <div class="form-group">
+            {{ form.module.label_tag }}
+            {{ form.module }}
+        </div>
+
+        <div class="form-group">
+            {{ form.sub_module.label_tag }}
+            {{ form.sub_module }}
+        </div>
+
+        <div class="form-group">
+            {{ form.content.label_tag }}
+            {{ form.content }}
+        </div>
+
+        <div class="form-group">
+            {{ form.img_list.label_tag }}
+            {{ form.img_list }}
+        </div>
+
+        <div class="form-group">
+            {{ form.video_url.label_tag }}
+            {{ form.video_url }}
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-3">Save Changes</button>
+    </form>
+</div>
+{% endblock %}

@@ -6,28 +6,98 @@
 {% block content %}
 <div class="container mt-4">
     <h2>{{ form.instance.pk|yesno:"Edit User,Add New User" }}</h2>
+    
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+            <strong>Invalid form</strong>
+            <ul class="errorlist">
+                {{ form.non_field_errors }}
+            </ul>
+        </div>
+    {% endif %}
+
     <form method="post">
         {% csrf_token %}
         <div class="form-group">
             {{ form.username.label_tag }}
             {{ form.username|add_class:"form-control" }}
+            {% if form.username.errors %}
+                <ul class="errorlist">
+                    {% for error in form.username.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
         </div>
         <div class="form-group">
-            {{ form.password.label_tag }}
-            {{ form.password|add_class:"form-control" }}
+            {{ form.first_name.label_tag }}
+            {{ form.first_name|add_class:"form-control" }}
+            {% if form.first_name.errors %}
+                <ul class="errorlist">
+                    {% for error in form.first_name.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+        <div class="form-group">
+            {{ form.last_name.label_tag }}
+            {{ form.last_name|add_class:"form-control" }}
+            {% if form.last_name.errors %}
+                <ul class="errorlist">
+                    {% for error in form.last_name.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
         </div>
         <div class="form-group">
             {{ form.email.label_tag }}
             {{ form.email|add_class:"form-control" }}
+            {% if form.email.errors %}
+                <ul class="errorlist">
+                    {% for error in form.email.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
         </div>
         <div class="form-group">
-            {{ form.full_name.label_tag }}
-            {{ form.full_name|add_class:"form-control" }}
+            {{ form.password1.label_tag }}
+            {{ form.password1|add_class:"form-control" }}
+            {% if form.password1.errors %}
+                <ul class="errorlist">
+                    {% for error in form.password1.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
         </div>
+        <div class="form-group">
+            {{ form.password2.label_tag }}
+            {{ form.password2|add_class:"form-control" }}
+            {% if form.password2.errors %}
+                <ul class="errorlist">
+                    {% for error in form.password2.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+        
+        <!-- New Role Combobox -->
         <div class="form-group">
             {{ form.role.label_tag }}
             {{ form.role|add_class:"form-control" }}
+            {% if form.role.errors %}
+                <ul class="errorlist">
+                    {% for error in form.role.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
         </div>
+
         <button type="submit" class="btn btn-primary">Save</button>
         <a href="{% url 'user:user_list' %}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to User List</a>
     </form>

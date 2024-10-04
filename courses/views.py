@@ -4,15 +4,25 @@ import pandas as pd
 from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
 from .models import Course
-from .forms import ExcelImportCourseForm
 from django.contrib import messages
 from django.http import JsonResponse
+from user.models import Profile  # Adjust import based on your structure
+from django.contrib.auth.models import User 
+from .forms import ExcelImportCourseForm,CourseForm
+from django.http import HttpResponseRedirect
+from django.contrib.auth.decorators import login_required
 
-# from django.contrib.auth.decorators import login_required
-
-
+@login_required(login_url='login')  # Redirect to login page if not logged in
 def home(request):
-    return render(request, 'home.html')  
+    # Check if the user is authenticated
+    is_student = False
+    if request.user.is_authenticated:
+        # Get the user's profile and check the role
+        profile = Profile.objects.filter(user=request.user).first()
+        is_student = profile.role.role_name == 'Student' if profile and profile.role else False
+
+    return render(request, 'home.html', {'is_student': is_student})
+
 
 # For admin
 def clean_content(content):
@@ -136,6 +146,8 @@ def import_courses(request):
                         print(f"Error importing row {index}: {e}")  # Log import errors
 
                 messages.success(request, f"{courses_imported} courses imported successfully!")
+                # Query all users to display after import
+                users = User.objects.all()  # Fetch all users from the database
             except Exception as e:
                 messages.error(request, f"An error occurred during import: {e}")
 
@@ -161,20 +173,6 @@ def delete_courses(request):
         
     return redirect('courses:course_admin')  # Replace with your course list view
 
-def delete_courses2(request):
-    if request.method == 'POST':
-        course_name = request.POST.get('course_name')
-        
-        if course_name:
-            deleted_count, _ = Course.objects.filter(course=course_name).delete()
-            if deleted_count > 0:
-                messages.success(request, f"{deleted_count} courses deleted successfully!")
-            else:
-                messages.warning(request, "No courses found with that name.")
-        else:
-            messages.error(request, "Please provide a course name.")
-
-    return render(request, 'course_admin.html') 
 
 # @login_required(login_url='/login/')
 def course_list(request):
@@ -339,6 +337,42 @@ def courses_list_database(request):
     return render(request, 'courses_list_database.html', context)
 
 
+
+def edit_course(request, course_name):
+    # Get all courses that match the given course_name
+    courses = Course.objects.filter(course=course_name)
+
+    # Create a context dictionary to pass to the template
+    context = {
+        'course_name': course_name,
+        'courses': courses,
+    }
+
+    # Render the 'edit_course.html' template with the context data
+    return render(request, 'edit_course.html', context)
+
+
+def edit_module(request, sub_module_name):
+    # Get the course object that matches the given sub_module_name, or return a 404 if not found
+    course = get_object_or_404(Course, sub_module=sub_module_name)
+
+    if request.method == 'POST':
+        # If the request is a POST, create a form instance with the submitted data and the current course instance
+        form = CourseForm(request.POST, instance=course)
+        if form.is_valid():
+            # If the form is valid, save the updated course information
+            form.save()
+
+            # Get the previous URL from the request's headers, or default to '/' (home page) if not found
+            previous_url = request.META.get('HTTP_REFERER', '/')
+            # Redirect the user to the previous page
+            return HttpResponseRedirect(previous_url)
+    else:
+        # If the request is not a POST, create a form instance pre-filled with the current course data
+        form = CourseForm(instance=course)
+
+    # Render the 'edit_module.html' template, passing the form and course name
+    return render(request, 'edit_module.html', {'form': form, 'course_name': course.course})
 
 
 

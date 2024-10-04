@@ -9,6 +9,9 @@ import openpyxl
 
 # Role views
 
+from django.contrib.auth.decorators import login_required
+
+@login_required(login_url='login')  # Redirect to login page if not logged in
 def role_list(request):
     roles = Role.objects.all()  # Lấy danh sách các role
     # module_groups = ModuleGroup.objects.all()

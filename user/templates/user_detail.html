@@ -1,14 +1,36 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ user.username }} Details{% endblock %}
+{% block title %}{{ user.username }} - Details{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2>User Details</h2>
-    <p><strong>Username:</strong> {{ user.username }}</p>
-    <p><strong>Email:</strong> {{ user.email }}</p>
-    <p><strong>Full Name:</strong> {{ user.full_name }}</p>
-    <p><strong>Role:</strong> {{ user.role }}</p>
-    <a href="{% url 'user:user_list' %}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to User List</a>
+<div class="container mt-5">
+    <div class="card shadow-lg">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0"><i class="fas fa-user"></i> {{ user.username }}'s Details</h3>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <p><strong>Username:</strong> <span class="text-muted">{{ user.username }}</span></p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Email:</strong> <span class="text-muted">{{ user.email }}</span></p>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <p><strong>Full Name:</strong> <span class="text-muted">{{ user.first_name }} {{ user.last_name }}</span></p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Role:</strong> <span class="text-muted">{{ user.profile.role.role_name }}</span></p>
+                </div>
+            </div>
+            <div class="text-center mt-4">
+                <a href="{% url 'user:user_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to User List
+                </a>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

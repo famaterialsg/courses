@@ -13,8 +13,6 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 import os
 
-import os
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -35,12 +33,11 @@ SECRET_KEY = 'django-insecure-)+*ch#!b#%umk54gt69_57y3hyed8k5uv)%mqir@=*8z_5hdrc
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+
 ALLOWED_HOSTS = ['*']
 
-LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/courses/'  
 LOGIN_URL = '/login/'  
-
+LOGIN_REDIRECT_URL = '/courses/home/'
 # Application definition
 
 INSTALLED_APPS = [
@@ -53,7 +50,6 @@ INSTALLED_APPS = [
     'courses',  
     'user',
     'role',
-    'training_program',
     'ckeditor',
     'ckeditor_uploader',
     
@@ -82,46 +78,22 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                 'django.template.context_processors.media',  # Ensure this is included
             ],
         },
     },
 ]
 
 WSGI_APPLICATION = 'COURSES_LMS.wsgi.application'
-LOGIN_URL = '/user/login/' 
-LOGIN_REDIRECT_URL = '/courses/home/'  
 
-LOGOUT_REDIRECT_URL = '/user/login/'
+
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',  
-
-#         'NAME': 'courses',                    
-#         'USER': 'root',                
-#         'PASSWORD': 'thuongnb19112002',         
-#         'HOST': 'localhost',                 
-#         'PORT': '3306',                       
-
-#     }
-# }
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'coursesdb',
-        'USER': 'postgres',
-        'PASSWORD': '1234567890',
-        'HOST': 'localhost',  # hoặc địa chỉ IP của server PostgreSQL
-        'PORT': '5432',  # cổng mặc định của PostgreSQL
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
@@ -161,7 +133,16 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
-
+STATIC_ROOT = os.path.join(BASE_DIR,'static/')
+#Ckeditor
+CKEDITOR_BASEPATH ='/static/ckeditor/ckeditor/'
+CKEDITOR_UPLOAD_PATH='uploads/'
+CKEDITOR_IMAGE_BACKEND = 'pillow'
+CKEDITOR_CONFIGS = {
+'default': {
+'toolbar': 'full',
+},
+}
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 

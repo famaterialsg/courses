@@ -1,170 +1,152 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import User, Role
+from role.models import Role
+from user.models import Profile
+from django.contrib.auth.models import User
 import pandas as pd
-import bcrypt
 from django.http import HttpResponse
 from django.contrib import messages
-from .forms import UserForm, RoleForm, ExcelImportForm
+from user.forms import UserForm, RoleForm, ExcelImportForm
 import openpyxl
-# from module_group.models import ModuleGroup
-from .forms import AssignTrainingProgramForm
 
-def assign_training_programs(request, user_id):
-    user = get_object_or_404(User, id=user_id)
-    
-    if request.method == 'POST':
-        form = AssignTrainingProgramForm(request.POST, instance=user)
-        if form.is_valid():
-            form.save()  # This will save the M2M relationship
-            messages.success(request, f"Training programs have been successfully assigned to {user.username}.")
-            return redirect('user:user_list')  # Redirect to your desired page after success
-    else:
-        form = AssignTrainingProgramForm(instance=user, initial={'training_programs': user.training_programs.all()})
+from django.core.exceptions import ObjectDoesNotExist
 
-    return render(request, 'assign_training_programs.html', {'user': user, 'form': form})
+from django.contrib.auth.decorators import login_required
+
+@login_required(login_url='login')  # Redirect to login page if not logged in
 
 
+
+# List all users
 def user_list(request):
     users = User.objects.all()
-    
     form = ExcelImportForm()
 
-    return render(request, 'user_list.html', {'users': users,  'form': form})
+    return render(request, 'user_list.html', {'users': users, 'form': form})
 
 
-def get_role_quick_and_dirty_way(role_id):
-    roles = {
-        1: "student",
-        2: "teacher",
-        3: "admin",
-        4: "super admin"
-    }
-    return roles.get(role_id, "Unknown role")
-
-def insert_user(username, hashed_password, email, full_name, role_id):
-    try:
-        User.objects.create(
-            username=username,
-            password=hashed_password.decode('utf-8'),
-            email=email,
-            full_name=full_name,
-            role_id=role_id
-        )
-        return True, None
-    except Exception as e:
-        return False, str(e)
-
-
+# View user detail
 def user_detail(request, pk):
-   
     user = get_object_or_404(User, pk=pk)
     return render(request, 'user_detail.html', {'user': user})
 
+
 def user_add(request):
-    
     if request.method == 'POST':
         form = UserForm(request.POST)
         if form.is_valid():
             form.save()
             return redirect('user:user_list')
+        else:
+            print('Invalid form')
+            print(form.errors)  # Print the errors to the console
     else:
         form = UserForm()
-    return render(request, 'user_form.html', {'form': form,})
+    return render(request, 'user_form.html', {'form': form})
 
+
+# Edit user details
 def user_edit(request, pk):
-    
     user = get_object_or_404(User, pk=pk)
     if request.method == 'POST':
         form = UserForm(request.POST, instance=user)
         if form.is_valid():
             form.save()
             return redirect('user:user_list')
+        else:
+            print('Form is invalid:', form.errors)  # Optional: For debugging purposes
     else:
         form = UserForm(instance=user)
+
     return render(request, 'user_form.html', {'form': form})
 
-# Export Users to Excel
+
+
+# Export users to Excel
 def export_users(request):
-    # Create a workbook and add a worksheet
+
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename=lms_users.xlsx'
+    response['Content-Disposition'] = 'attachment; filename=users.xlsx'
     
     workbook = openpyxl.Workbook()
     worksheet = workbook.active
     worksheet.title = 'Users'
     
-    # Define the columns
-    columns = ['username', 'password', 'email', 'full_name', 'role_id', 'role_name']
+    columns = ['username', 'password', 'email', 'first_name', 'last_name', 'role']
     worksheet.append(columns)
     
-    # Fetch all users and write to the Excel file
     for user in User.objects.all():
-        worksheet.append([user.username, '******', user.email, user.full_name, user.role.id, str(user.role)])
+        profile = Profile.objects.filter(user=user).first()  # Get the profile for the user
+        role_name = profile.role.name if profile and profile.role else ''
+        worksheet.append([user.username, '', user.email, user.first_name, user.last_name, role_name])
     
     workbook.save(response)
     return response
+
+
+
+from django.contrib.auth.models import User
 
 def import_users(request):
     if request.method == 'POST':
         form = ExcelImportForm(request.POST, request.FILES)
         if form.is_valid():
-            uploaded_file = request.FILES['excel_file']
+            excel_file = request.FILES['excel_file']
             try:
-                # Read the Excel file
-                df = pd.read_excel(uploaded_file)
-                users_imported = 0  # Counter for users successfully imported
+                # Load the Excel file into a DataFrame
+                df = pd.read_excel(excel_file)
 
-                # Loop over the rows in the DataFrame
+                # Iterate through the rows of the DataFrame
                 for index, row in df.iterrows():
-                    username = row.get("username")
-                    password = str(row.get("password"))
-                    email = row.get("email")
-                    full_name = row.get("full_name")
-                    role_id = row.get("role_id")
+                    username = row['username']
+                    password = row['password']
+                    email = row['email']
+                    first_name = row['first_name']
+                    last_name = row['last_name']
+                    role_name = row['role']
 
-                    print(f"Processing row: {username}, {email}, {role_id}")  # Debugging
+                    # Check if the role exists, if not, create it
+                    role, created = Role.objects.get_or_create(role_name=role_name)
 
-                    # Handling the role lookup
-                    role = Role.objects.filter(id=role_id).first()
-                    if not role:
-                        messages.error(request, f"Invalid role ID '{role_id}' for user '{username}'. Skipping.")
-                        print(f"Invalid role ID for {username}")  # Debugging
-                        continue
+                    # Check if the user exists
+                    user, created = User.objects.get_or_create(
+                        username=username,
+                        defaults={
+                            'email': email,
+                            'first_name': first_name,
+                            'last_name': last_name,
+                        }
+                    )
 
-                    # Hash the password
-                    hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode()
+                    # Update the user's details if they exist or set the password for new users
+                    if not created:
+                        user.email = email
+                        user.first_name = first_name
+                        user.last_name = last_name
+                    user.set_password(password)  # Set password
+                    user.save()
 
-                    # Check if the user already exists
-                    if not User.objects.filter(username=username).exists():
-                        # Create and save the new user
-                        User.objects.create(
-                            username=username,
-                            password=hashed_password,
-                            email=email,
-                            full_name=full_name,
-                            role=role
-                        )
-                        users_imported += 1
-                        print(f"User {username} created")  # Debugging
-                    else:
-                        messages.warning(request, f"User '{username}' already exists. Skipping.")
-                        print(f"User {username} already exists")  # Debugging
+                    # Assign role to user
+                    user.profile.role = role  # Assuming you have a profile with a role field
+                    user.profile.save()
 
-                # Feedback message
-                if users_imported > 0:
-                    messages.success(request, f"{users_imported} users imported successfully!")
-                else:
-                    messages.warning(request, "No users were imported.")
+                messages.success(request, "Users imported successfully!")
+                
+                # Query all users and their profiles/roles to display after import
+                users = User.objects.select_related('profile__role')  # Fetch users and their roles
 
             except Exception as e:
-                messages.error(request, f"An error occurred during import: {e}")
-                print(f"Error during import: {e}")  # Debugging
+                messages.error(request, f"Error occurred: {str(e)}")
+                users = User.objects.none()  # Return empty queryset if error
 
-            return redirect('user:user_list')
+            return render(request, 'user_list.html', {'form': form, 'users': users})
+
     else:
         form = ExcelImportForm()
+        users = User.objects.select_related('profile__role')  # Show users when loading the form
+    return render(request, 'user_list.html', {'form': form, 'users': users})
 
-    return render(request, 'user_list.html', {'form': form})
+
+
 
 
 
